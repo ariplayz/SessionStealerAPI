@@ -29,7 +29,7 @@ app.MapPost("/upload", async (HttpRequest request) =>
         return Results.BadRequest("No file uploaded.");
     }
 
-    var uploadPath = "/root/upload/";
+    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
     Directory.CreateDirectory(uploadPath);
  
     var file = request.Form.Files[0]; // Get the first uploaded file
