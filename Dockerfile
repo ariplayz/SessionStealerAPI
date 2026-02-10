@@ -1,5 +1,6 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
+USER root
+RUN mkdir -p /root/uploads
 WORKDIR /app
 EXPOSE 8080
 
