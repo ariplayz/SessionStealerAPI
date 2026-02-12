@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,36 @@ app.MapPost("/upload", async (HttpRequest request) =>
     }
 
     return Results.Ok(new { filePath });
+});
+
+app.MapGet("/download", async () =>
+{
+    var baseUploadPath = "/root/uploads";
+
+    if (!Directory.Exists(baseUploadPath))
+    {
+        return Results.NotFound("Uploads folder not found.");
+    }
+
+    var tempZipPath = Path.Combine(Path.GetTempPath(), $"uploads_{Guid.NewGuid()}.zip");
+
+    try
+    {
+        ZipFile.CreateFromDirectory(baseUploadPath, tempZipPath);
+        
+        var fileBytes = await File.ReadAllBytesAsync(tempZipPath);
+        
+        // Clean up the temp file after reading it into memory
+        // Alternatively, we could stream it and delete on close, but for simplicity and small/medium sizes this works.
+        File.Delete(tempZipPath);
+
+        return Results.File(fileBytes, "application/zip", "uploads.zip");
+    }
+    catch (Exception ex)
+    {
+        if (File.Exists(tempZipPath)) File.Delete(tempZipPath);
+        return Results.Problem($"An error occurred while creating the download: {ex.Message}");
+    }
 });
 
 app.Run();
